@@ -241,6 +241,7 @@ const expanded = new Set(), disp = new Map(), els = new Map(), trayEls = new Map
 const limits = new Map(), panel = new Map(), failed = new Set(), loaded = new Set();  // key -> {att:i} | {menu:name, term?:j, ptype?:string}
 const TAG_RE = /^(No Evidence|Paragraph \d+|Contested|Needs Fact-Check|Popular|Outdated|Older Data|Could Be Outdated|Cherry-Picked|Out of Context|Hearsay|Implied|May Need Clarification|Appeal to Authority|Accusation|Developing Story|Socratic Question|Opinion|Non-Sequitur|Very generalized|More To Explore|Society Library Point)/i;
 const KIND_RE = /^(Position|Intro|Question|category|Topic|Argument)$/i;
+const SHOW_MEDIA_INLINE = false; // photos and videos open from the Media button only
 const ATT_NAME = {q:'Quote', r:'References', m:'Media', d:'Description', e:'Equation'};
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -425,7 +426,7 @@ function cardHTML(d){
   // images and videos show inside the card as soon as it is on screen; the attachment button still opens sources
   const M = A.map((a, i) => [a, i]).filter(([a]) => a.k === 'm' && a.u && !failed.has(a.u) && !(ytId(a.u) && failed.has('yt:' + ytId(a.u).id)));
   const mediaOpen = st.att != null && A[st.att] && A[st.att].k === 'm';
-  const inl = M.length && !mediaOpen && !tour ? `<div class="inl">${inlineMedia(M[0][0])}${M.length > 1 ? `<button type="button" class="more" data-att="${M[1][1]}">+${M.length - 1} more ${M.length - 1 === 1 ? 'item' : 'items'}</button>` : ''}</div>` : '';
+  const inl = SHOW_MEDIA_INLINE && M.length && !mediaOpen && !tour ? `<div class="inl">${inlineMedia(M[0][0])}${M.length > 1 ? `<button type="button" class="more" data-att="${M[1][1]}">+${M.length - 1} more ${M.length - 1 === 1 ? 'item' : 'items'}</button>` : ''}</div>` : '';
   const atts = A.length ? `<div class="atts">${A.map((a, i) => `<button type="button" data-att="${i}" class="${st.att === i ? 'on' : ''}">${i + 1}: ${ATT_NAME[a.k]}</button>`).join('')}</div>` : '';
   let pan = '';
   if (st.att != null && A[st.att]) pan = `<div class="panel">${attPanel(A[st.att])}</div>`;
