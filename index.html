@@ -454,24 +454,27 @@ function measure(d){
     if (rightKids(d).length > vk.length) kh += GY + PAGER_H;
   }
   d.kh = kh; d.bh = Math.max(d.h, kh);
-  let ph = 0;
-  shownPrem(d).forEach(p => { p.x = d.x + IND; p.w = widthOf(p); ph += PG + measure(p); });
-  d.ph = ph ? ph + 18 : 0;
-  d.th = d.bh + d.ph;
+  const prem = shownPrem(d);
+  if (!prem.length){ d.ph = 0; d.th = d.bh; return d.th; }
+  // premises sit right under their argument card; a premise with its own open branch starts below the argument's branch so the two never overlap
+  let run = d.h + 18;
+  prem.forEach(p => { p.x = d.x + IND; p.w = widthOf(p); measure(p); if (p.kh) run = Math.max(run, kh + GY); run += PG + p.th; });
+  d.ph = run; d.th = Math.max(kh, run + 4);
   return d.th;
 }
 function place(d, top){
-  d.y = top + (d.bh - d.h) / 2;
+  const prem = shownPrem(d);
+  d.y = prem.length ? top : top + (d.bh - d.h) / 2;
   if (d.kh){
-    let t = top + (d.bh - d.kh) / 2;
+    let t = prem.length ? top : top + (d.bh - d.kh) / 2;
     const vk = visibleRight(d);
     vk.forEach(c => { place(c, t); t += c.th + GY; });
     d.pagerY = rightKids(d).length > vk.length ? t : null;
   } else d.pagerY = null;
-  if (d.ph){
-    let t = top + d.bh + 18;
-    shownPrem(d).forEach(p => { t += PG; place(p, t); t += p.th; });
-    d.trayBox = {x: d.x + IND - 14, y: top + d.bh + 2, w: d.w - IND + 14, h: d.ph + 4};
+  if (prem.length){
+    let run = d.h + 18;
+    prem.forEach(p => { if (p.kh) run = Math.max(run, d.kh + GY); run += PG; place(p, top + run); run += p.th; });
+    d.trayBox = {x: d.x + IND - 14, y: top + d.h + 2, w: d.w - IND + 14, h: run - d.h + 2};
   } else d.trayBox = null;
 }
 let OX = 170, OY = 50, settleTimer = null, lastVisible = [];
