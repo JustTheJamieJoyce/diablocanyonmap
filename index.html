@@ -241,6 +241,7 @@ const expanded = new Set(), disp = new Map(), els = new Map(), trayEls = new Map
 const limits = new Map(), panel = new Map(), failed = new Set(), loaded = new Set();  // key -> {att:i} | {menu:name, term?:j, ptype?:string}
 const TAG_RE = /^(No Evidence|Paragraph \d+|Contested|Needs Fact-Check|Popular|Outdated|Older Data|Could Be Outdated|Cherry-Picked|Out of Context|Hearsay|Implied|May Need Clarification|Appeal to Authority|Accusation|Developing Story|Socratic Question|Opinion|Non-Sequitur|Very generalized|More To Explore|Society Library Point)/i;
 const KIND_RE = /^(Position|Intro|Question|category|Topic|Argument)$/i;
+const HIDDEN_RE = /^This concludes the summary of high-level/i;
 const SHOW_MEDIA_INLINE = false; // photos and videos open from the Media button only
 const ATT_NAME = {q:'Quote', r:'References', m:'Media', d:'Description', e:'Equation'};
 
@@ -293,6 +294,7 @@ function split(d){
   const owner = d.raw.length === 2 ? -1 : d.main;
   for (const l of allLinks(d)){
     if (anc.has(l[0])) continue;
+    if (HIDDEN_RE.test(plain(l[0]))) continue; // closing notes for the narrative summary view, not part of the map
     if (owner >= 0 && isPremLink(owner, l)) prem.push(l); else right.push(l);
   }
   // as in Debate Map: supporting cards first, then neutral ones, then opposing; map order kept within each group
@@ -751,7 +753,7 @@ function runSearch(){
   if (q.length < 3){ box.hidden = true; return; }
   if (!LOWER) buildIndex();
   const words = q.split(/\s+/).filter(Boolean), hits = [];
-  for (let i = 0; i < N.length && hits.length < 40; i++){ if ((N[i].x || N[i].q) && words.every(w => LOWER[i].includes(w))) hits.push(i); }
+  for (let i = 0; i < N.length && hits.length < 40; i++){ if ((N[i].x || N[i].q) && words.every(w => LOWER[i].includes(w)) && !HIDDEN_RE.test(plain(i))) hits.push(i); }
   const re = new RegExp('(' + words.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')', 'gi');
   box.innerHTML = hits.length ? hits.map(i => `<button type="button" data-i="${i}"><span class="r-t">${esc(plain(i, 1)).replace(re, '<mark>$1</mark>')}</span><span class="r-m">${esc(positionOf(i))}</span></button>`).join('') : '<div class="empty">No matching cards. Try fewer words.</div>';
   box.hidden = false;
